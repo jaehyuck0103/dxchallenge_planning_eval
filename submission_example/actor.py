@@ -27,6 +27,7 @@ The returned ``WaymaxActorOutput.action`` controls the ego through an
   - ``valid``: bool ``(1,)``.
 """
 
+import jax
 import jax.numpy as jnp
 from waymax import datatypes
 from waymax.agents import actor_core
@@ -44,12 +45,19 @@ def get_goal_xy(state: datatypes.SimulatorState) -> jnp.ndarray:
 class ConstantVelocityPlanner(actor_core.WaymaxActorCore):
     """Drives straight at the current speed (zero acceleration, zero steering)."""
 
+    def __init__(self):
+        # jit is the submission's own responsibility — the evaluator never jits
+        # participant code. Wrap the bound method once: `self` lives in the
+        # closure (not traced), so any weights stored on `self` are baked into
+        # the compiled function as constants.
+        self._jit_select = jax.jit(self._select_impl)
+
     def init(self, rng, state):
         """No internal state needed for this planner."""
         return None
 
-    def select_action(self, params, state, actor_state, rng):
-        del params, actor_state, rng  # unused
+    def _select_impl(self, state, actor_state, rng):
+        del actor_state, rng  # unused
 
         # A real submission would extract features from `state` here, e.g.:
         # goal_xy = get_goal_xy(state)
@@ -63,6 +71,10 @@ class ConstantVelocityPlanner(actor_core.WaymaxActorCore):
             action=action,
             is_controlled=state.object_metadata.is_sdc,
         )
+
+    def select_action(self, params, state, actor_state, rng):
+        del params  # unused: this planner owns its (non-existent) weights
+        return self._jit_select(state, actor_state, rng)
 
     @property
     def name(self) -> str:

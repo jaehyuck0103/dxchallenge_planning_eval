@@ -73,5 +73,28 @@ rideflux_score = (7·clip(progress_ratio,0,1) + 3·comfort)/10 × (1−overlap) 
 최종 점수 = 전체 시나리오의 rideflux_score 평균. 참가자 코드가 특정
 시나리오에서 예외를 던지면 해당 시나리오는 0점 처리(`error` 컬럼 표시).
 
+## 성능 팁: jit은 제출물 안에서
+
+평가기는 참가자 코드를 jit하지 않는다 (JAX가 아닐 수도 있으므로). JAX로 짠
+planner라면 제출물 안에서 직접 `jax.jit`를 적용하면 된다 — 입력 shape가
+시나리오 간 고정이라 컴파일은 최초 1회뿐이다 (expert 기준 시나리오당 약 6배 단축).
+
+```python
+# 순수 함수형이면 그대로 감싸기 (submission_expert/actor.py 참조):
+return actor_core.actor_core_factory(
+    init=base.init, select_action=jax.jit(base.select_action), name=...)
+
+# 클래스 기반이면 __init__에서 bound method를 감싸기 (weights는 상수로 컴파일됨):
+class MyPlanner(actor_core.WaymaxActorCore):
+    def __init__(self, weights):
+        self._weights = weights
+        self._jit_select = jax.jit(self._select_impl)
+    def select_action(self, params, state, actor_state, rng):
+        return self._jit_select(state, actor_state, rng)
+```
+
+주의: jit 내부에서는 traced 값(`state.timestep` 등)에 대한 python `if`/`int()`가
+불가하다 (`jnp.where`/`lax.cond` 사용).
+
 `--disable_future_masking`은 주최측 디버그 전용(expert replay 검증 등)이며
 채점에 사용 금지.
