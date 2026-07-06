@@ -1,0 +1,25 @@
+- motion planning 챌린지를 진행하려고함.
+- 그래서 특정 데이터셋에 대해서 평가하고 rideflux_score를 채점하는 스크립트 작성 
+- 스크립트 작성 위치는 dxchallenge_planning_eval 폴더
+- 특정 데이터셋 위치는 script 실행시 argument로 받기. (v-max 실행 스크립트 처럼)
+- 이전에 작성 수정했던 v-max는 참가자들에게 학습방법을 알려주는 baseline으로 제공할꺼임.
+- 평가프로그램은 v-max를 의존해서는 안됨.
+- dxchallenge_planning_eval폴더에 기본적으로 waymax, tensorflow용 uv 가상환경은 마련해두었음.
+- 혹시 더 필요한 패키지가 있으면 알려줘.
+- 가능한 pure waymax를 쓰되, 필요한 metric 관련 코드 필요한거 있으면 기존 V-Max 프로젝트에서 copy해올것.
+- V-Max처럼 PlanningAgentEnvironment 사용.
+- ego를 제외한 나머지는 그냥 로깅 trajectory 사용
+- ego는 V-Max처럼 BicycleModel로 들어온다고 가정.
+
+- 참가자들로부터는 WaymaxActorCore 클래스를 상속한 형태의 코드와 weight를 받을꺼임.
+- 일단 평가프로그램 작성이 우선이니까, 일단은 등속운동하는 간단한 모델을 참가자한테 받아서 평가하는 걸로 하자.
+
+- sdc_path 만들 필요 없음.
+- 당연히 각 step에서 미래 정보는 입력으로 주어서는 안됨.
+- 단, ego 차량의 마지막 지점 point는 제공해줘야함. (목표)
+- observation을 어떻게 정의하고, feature를 어떻게 extraction 하는지는 참가자 코드에서 알아서 해야하는 거임. 제공 불필요.
+
+- 예전에 관련되서 짜보았던 코드인데 참조는 해봐.. 근데 너무 얽매이진 말고..
+  - /home/jae/Projects/my_codabench/waymax_tutorial/04.planning_agent_demo.py
+  - /home/jae/Projects/my_codabench/waymax_tutorial/06.evaluate_demo.py
+  - /home/jae/Projects/my_codabench/waymax_tutorial/challenge/challenge_evaluator.py
